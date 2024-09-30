@@ -26,7 +26,7 @@ cliente = tweepy.Client(bearer_token=bearer_token,
 
 # Cargar los mensajes desde un archivo JSON
 def cargar_mensajes():
-    with open('messages.json', 'r', encoding='utf-8') as f:
+    with open('./messages.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data['messages']
 
