@@ -3,7 +3,6 @@ import tweepy
 from dotenv import load_dotenv
 import os
 import random
-import json
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
@@ -24,35 +23,43 @@ cliente = tweepy.Client(bearer_token=bearer_token,
                         access_token=access_token,
                         access_token_secret=access_token_secret)
 
-# Cargar los mensajes desde un archivo JSON
-def cargar_mensajes():
-    with open('./messages.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    return data['messages']
-
-# Cargar los mensajes una vez al iniciar la app
-messages_templates = cargar_mensajes()
+# Lista de mensajes predefinidos
+mensajes = [
+    "🛑 Cuidado con este SMS fraudulento 🛑 Si recibes un mensaje diciendo: '[MENSAJE AQUÍ]', ¡no hagas clic! Es una estafa. #Smishing #ProtegeTuInformación",
+    "🛑 Nuevo smishing detectado 🛑 Si ves un SMS que dice: '[MENSAJE AQUÍ]', ¡ignóralo! No compartas información personal. #FraudeSMS #Ciberseguridad",
+    "🛑 Atención: Smishing en curso 🛑 Mensajes como '[MENSAJE AQUÍ]' son intentos de estafa. ¡No caigas en la trampa! #ProtegeTusDatos #Ciberseguridad",
+    "🛑 Alerta de smishing 🛑 Recibiste un mensaje que dice: '[MENSAJE AQUÍ]'? No hagas clic, es un fraude para robar tu información. #Ciberseguridad #FraudeSMS",
+    "🛑 Nuevo intento de estafa 🛑 Si te llega un SMS como '[MENSAJE AQUÍ]', ¡es un fraude! No proporciones datos personales. #ProtegeTuMóvil #Ciberseguridad",
+    "🛑 Smishing en acción 🛑 Si ves un mensaje diciendo: '[MENSAJE AQUÍ]', no hagas clic. ¡Es una estafa! #FraudeSMS #ProtecciónDigital",
+    "🛑 Cuidado con este mensaje 🛑 '[MENSAJE AQUÍ]' es un intento de smishing. No sigas el enlace. #Ciberseguridad #ProtegeTuInformación",
+    "🛑 Advertencia: Smishing 🛑 Si recibes un SMS diciendo: '[MENSAJE AQUÍ]', no hagas clic. Es un fraude. #Ciberseguridad #FraudeSMS"
+]
 
 @app.route('/tweet', methods=['POST'])
 def create_tweet():
     try:
-        # Recibir el SMS del cuerpo de la solicitud
+        # Recibe los datos JSON del cuerpo de la solicitud
         data = request.json
-        sms_message = data.get('sms', '')
+        sms_message = data.get('sms', '')  # Extrae el mensaje SMS
+        
+        if not sms_message:
+            return jsonify({'error': 'No se proporcionó ningún mensaje SMS'}), 400
 
-        # Seleccionar un template al azar
-        selected_template = random.choice(messages_templates)
+        # Selecciona un mensaje aleatorio de la lista
+        mensaje_aleatorio = random.choice(mensajes)
+        
+        # Inserta el mensaje SMS en el texto del tweet
+        tweet_text = mensaje_aleatorio.replace('[MENSAJE AQUÍ]', sms_message)
 
-        # Insertar el SMS en el template
-        tweet_text = selected_template.replace("[MENSAJE AQUÍ]", sms_message)
-
-        # Publicar el tweet
+        # Publica el tweet
         response = cliente.create_tweet(text=tweet_text)
 
-        # Devolver la respuesta de la API de Twitter
+        # Devuelve la respuesta de la API de Twitter
         return jsonify(response.data), 200
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500  # Manejo de errores
+        # Manejo de errores
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
