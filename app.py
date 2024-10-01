@@ -3,13 +3,14 @@ import tweepy
 from dotenv import load_dotenv
 import os
 import random
-from flask_cors import CORS
+from flask_cors import CORS  # Importa CORS
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Habilita CORS para todas las rutas
+
 # Definimos las variables que nos identifican junto con nuestra app
 api_key = os.getenv('API_KEY')
 api_key_secret = os.getenv('API_KEY_SECRET')
