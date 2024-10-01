@@ -2,3 +2,4 @@ flask
 tweepy
 python-dotenv
 os
+Flask-Cors
