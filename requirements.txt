@@ -1,5 +1,4 @@
 flask
 tweepy
 python-dotenv
-os
 Flask-Cors==3.0.10
