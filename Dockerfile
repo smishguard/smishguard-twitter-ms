@@ -6,10 +6,11 @@ WORKDIR /app
 
 # Copia los archivos requeridos
 COPY app.py /app/app.py
-#COPY .env /app/.env
+COPY requirements.txt /app/requirements.txt
 
-# Instala las dependencias
-RUN pip install flask tweepy python-dotenv
+
+# Instala las dependencias desde requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Expone el puerto en el que la aplicación correrá
 EXPOSE 5000
