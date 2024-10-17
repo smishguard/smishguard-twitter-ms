@@ -61,5 +61,9 @@ def create_tweet():
         # Manejo de errores
         return jsonify({'error': str(e)}), 500
 
+@app.route("/ping")
+def ping():
+    return jsonify({"message": "pong"})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
