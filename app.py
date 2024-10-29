@@ -3,13 +3,14 @@ import tweepy
 from dotenv import load_dotenv
 import os
 import random
-from flask_cors import CORS  # Importa CORS
+from flask_cors import CORS
+import re  # Para usar expresiones regulares y buscar nombres de bancos
 
 # Cargar las variables de entorno desde el archivo .env
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Habilita CORS para todas las rutas
+CORS(app)
 
 # Definimos las variables que nos identifican junto con nuestra app
 api_key = os.getenv('API_KEY')
@@ -25,17 +26,38 @@ cliente = tweepy.Client(bearer_token=bearer_token,
                         access_token=access_token,
                         access_token_secret=access_token_secret)
 
+# Diccionario de bancos colombianos y sus etiquetas
+bancos_colombianos = {
+    "bancolombia": "@Bancolombia",
+    "davivienda": "@Davivienda",
+    "banco de bogota": "@BancoDeBogota",
+    "banco popular": "@PopularColombia",
+    "banco de occidente": "@Bco_Occidente",
+    "bbva": "@BBVA_Colombia",
+    "scotiabank colpatria": "@scotiabank_co",
+    "banco caja social": "@BancoCajaSocial",
+    "itau": "@Itaú",
+    "citibank": "@Citibank",
+    "nequi": "@Nequi",
+    "daviplata": "@Davivienda",
+}
+
 # Lista de mensajes predefinidos
 mensajes = [
-    "🛑 Cuidado con este SMS fraudulento 🛑 Si recibes un mensaje diciendo: '[MENSAJE AQUÍ]', ¡no hagas clic! Es una estafa. #Smishing #ProtegeTuInformación",
-    "🛑 Nuevo smishing detectado 🛑 Si ves un SMS que dice: '[MENSAJE AQUÍ]', ¡ignóralo! No compartas información personal. #FraudeSMS #Ciberseguridad",
-    "🛑 Atención: Smishing en curso 🛑 Mensajes como '[MENSAJE AQUÍ]' son intentos de estafa. ¡No caigas en la trampa! #ProtegeTusDatos #Ciberseguridad",
-    "🛑 Alerta de smishing 🛑 Recibiste un mensaje que dice: '[MENSAJE AQUÍ]'? No hagas clic, es un fraude para robar tu información. #Ciberseguridad #FraudeSMS",
-    "🛑 Nuevo intento de estafa 🛑 Si te llega un SMS como '[MENSAJE AQUÍ]', ¡es un fraude! No proporciones datos personales. #ProtegeTuMóvil #Ciberseguridad",
-    "🛑 Smishing en acción 🛑 Si ves un mensaje diciendo: '[MENSAJE AQUÍ]', no hagas clic. ¡Es una estafa! #FraudeSMS #ProtecciónDigital",
-    "🛑 Cuidado con este mensaje 🛑 '[MENSAJE AQUÍ]' es un intento de smishing. No sigas el enlace. #Ciberseguridad #ProtegeTuInformación",
-    "🛑 Advertencia: Smishing 🛑 Si recibes un SMS diciendo: '[MENSAJE AQUÍ]', no hagas clic. Es un fraude. #Ciberseguridad #FraudeSMS"
+    "⚠️ Alerta de smishing ⚠️ Mensajes como '[MENSAJE AQUÍ]' buscan estafarte. ¡No caigas! #Ciberseguridad",
+    "🚨 Cuidado con el fraude 🚨 Si ves un SMS diciendo: '[MENSAJE AQUÍ]', ignóralo. #ProtegeTuInfo",
+    "🛑 Alerta 🛑 Recibiste un mensaje que dice: '[MENSAJE AQUÍ]'? ¡No hagas clic! #EstafaSMS",
+    "🔒 Protege tus datos 🔒 Mensajes como '[MENSAJE AQUÍ]' son intentos de estafa. #SeguridadDigital",
+    "⚠️ Estafa detectada ⚠️ Un SMS diciendo '[MENSAJE AQUÍ]' es fraude. No des tu info. #Cuídate",
 ]
+
+# Función para verificar y agregar etiquetas de bancos
+def verificar_bancos(sms_message):
+    etiquetas = "@caivirtual"
+    for banco, etiqueta in bancos_colombianos.items():
+        if re.search(rf"\b{banco}\b", sms_message, re.IGNORECASE):
+            etiquetas += f" {etiqueta}"
+    return etiquetas
 
 @app.route('/tweet', methods=['POST'])
 def create_tweet():
@@ -52,6 +74,10 @@ def create_tweet():
         
         # Inserta el mensaje SMS en el texto del tweet
         tweet_text = mensaje_aleatorio.replace('[MENSAJE AQUÍ]', sms_message)
+
+        # Agrega etiquetas de bancos si se menciona alguno
+        etiquetas = verificar_bancos(sms_message)
+        tweet_text += f" {etiquetas}"
 
         # Publica el tweet
         response = cliente.create_tweet(text=tweet_text)
