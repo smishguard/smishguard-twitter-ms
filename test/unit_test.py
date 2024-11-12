@@ -4,7 +4,7 @@ from app import app, verificar_bancos  # Importar app y función de verificació
 import json
 
 class APITestCase(unittest.TestCase):
-    # Configuración inicial
+    # Configuración inicial para el cliente de prueba de Flask
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
@@ -32,10 +32,23 @@ class APITestCase(unittest.TestCase):
 
         # Verifica que la API respondió correctamente
         self.assertEqual(response.status_code, 200)
-        self.assertIn("id", response.json)  # Comprueba que hay un ID en la respuesta
+        self.assertIn("id", response.json)  # Comprueba que la respuesta contiene un ID
+        self.assertIn("text", response.json)  # Comprueba que la respuesta contiene el texto del tweet
 
-        # Verifica que la función create_tweet se llamó una vez
+        # Verifica que la función create_tweet se llamó una vez con el texto del tweet
         mock_create_tweet.assert_called_once()
+        called_args = mock_create_tweet.call_args[1]
+        self.assertIn("Alerta de fraude de Bancolombia", called_args['text'])
+
+    # Prueba para el caso en que no se proporciona un mensaje SMS en /tweet
+    def test_create_tweet_no_sms(self):
+        data = {}  # No se proporciona el campo 'sms'
+        response = self.app.post('/tweet', data=json.dumps(data),
+                                 content_type='application/json')
+
+        # Verifica que responde con un error 400
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json, {'error': 'No se proporcionó ningún mensaje SMS'})
 
     # Prueba para la función verificar_bancos
     def test_verificar_bancos(self):
@@ -51,7 +64,7 @@ class APITestCase(unittest.TestCase):
 
         sms_message3 = "Mensaje sin banco mencionado"
         etiquetas3 = verificar_bancos(sms_message3)
-        self.assertEqual(etiquetas3, "@caivirtual")  # Solo debe incluir @caivirtual
+        self.assertEqual(etiquetas3, "@caivirtual")  # Solo debe incluir @caivirtual si no se menciona ningún banco
 
 if __name__ == '__main__':
     unittest.main()
